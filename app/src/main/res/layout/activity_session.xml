@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:visibility="gone"/>
 
     <TextView
@@ -18,9 +18,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textSize="14sp"
-        android:textColor="@color/textSecondary"
-        android:layout_marginTop="16dp"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary"
+        android:layout_marginTop="8dp"
         android:gravity="center"/>
 
     <TextView
@@ -30,35 +31,72 @@
         android:text=""
         android:textSize="12sp"
         android:textColor="@color/textSecondary"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:gravity="center"
-        android:maxLines="5"/>
+        android:maxLines="3"/>
 
-    <Button
-        android:id="@+id/launchButton"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="@string/launch_linux"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginTop="32dp"
-        android:visibility="gone"/>
-
-    <Button
-        android:id="@+id/restartButton"
+    <!-- Action Buttons Row -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/restart_setup"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"
-        android:visibility="gone"/>
+        android:orientation="vertical"
+        android:layout_marginTop="16dp">
 
+        <Button
+            android:id="@+id/launchButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="@string/launch_linux"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/openX11Button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="@string/open_x11_display"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/copyCommandButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/copy_boot_command"
+                android:textSize="12sp"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/restartButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/restart_setup"
+                android:textSize="12sp"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_marginStart="8dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Terminal Output -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="12dp">
 
         <EditText
             android:id="@+id/commandOutput"
@@ -73,7 +111,7 @@
             android:editable="false"
             android:focusable="false"
             android:padding="8dp"
-            android:hint="Terminal output will appear here..."/>
+            android:hint="Linux console output will appear here..."/>
     </ScrollView>
 
 </LinearLayout>

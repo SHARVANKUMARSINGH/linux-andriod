@@ -8,6 +8,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.linuxandroid.proot.LinuxBootloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,8 @@ class BootstrapDownloaderImpl(
         private const val TAG = "BootstrapDownloader"
         private const val CHANNEL_ID = "bootstrap_downloads"
         private const val NOTIFICATION_ID = 1001
+        const val TERMUX_X11_APK_URL = "https://github.com/termux/termux-x11/releases/download/nightly/app-arm64-v8a-debug.apk"
+        const val FIREFOX_APK_URL = "https://archive.mozilla.org/pub/firefox/releases/132.0/android-arm64/en-US/firefox-132.0.apk"
     }
 
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
@@ -111,92 +114,101 @@ class BootstrapDownloaderImpl(
     }
 
     private fun cancelNotification(notificationId: Int) {
-        NotificationManagerCompat.from(context).cancel(notificationId)
+        try {
+            NotificationManagerCompat.from(context).cancel(notificationId)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to cancel notification: ${e.message}")
+        }
+    }
+
+    override suspend fun downloadDistribution(distro: String, arch: String, targetDir: String) {
+        _downloadState.value = DownloadState.DownloadsPending
+        val url = LinuxBootloader.getRootfsUrl(distro, arch)
+        val ext = if (url.endsWith(".tar.xz")) ".tar.xz" else if (url.endsWith(".tar.zst")) ".tar.zst" else ".tar.gz"
+        val fileName = "rootfs-$distro-$arch$ext"
+
+        val item = DownloadItem(
+            id = "distro_$distro",
+            name = "$distro ($arch) Rootfs",
+            url = url,
+            localPath = targetDir,
+            fileName = fileName
+        )
+
+        downloads[item.id] = item
+        _downloadState.value = DownloadState.Downloading
+        downloadFiles()
+        _downloadState.value = DownloadState.Completed
+    }
+
+    override suspend fun downloadTermuxX11Apk(targetDir: String) {
+        val item = DownloadItem(
+            id = "termux_x11_apk",
+            name = "Termux:X11 Companion APK",
+            url = TERMUX_X11_APK_URL,
+            localPath = targetDir,
+            fileName = "termux-x11-app.apk"
+        )
+        downloads[item.id] = item
+        downloadFiles()
     }
 
     override suspend fun downloadTmuxBootstrap() {
         _downloadState.value = DownloadState.DownloadsPending
+        val baseDir = File(context.filesDir, "termux_bootstrap")
+        if (!baseDir.exists()) baseDir.mkdirs()
 
-        val downloadItems = createTmuxDownloads()
-        downloads.putAll(downloadItems)
+        val item = DownloadItem(
+            id = "termux_arm64",
+            name = "Termux PRoot Rootfs",
+            url = LinuxBootloader.getRootfsUrl("ubuntu", "arm64"),
+            localPath = baseDir.absolutePath,
+            fileName = "ubuntu-arm64-rootfs.tar.gz"
+        )
+        downloads[item.id] = item
 
         _downloadState.value = DownloadState.Downloading
-
         downloadFiles()
-
         _downloadState.value = DownloadState.Completed
     }
 
     override suspend fun downloadTmuxX11Bootstrap() {
-        val downloadItems = createTmuxX11Downloads()
-        downloads.putAll(downloadItems)
-
-        downloadFiles()
+        val baseDir = File(context.filesDir, "termux_x11")
+        if (!baseDir.exists()) baseDir.mkdirs()
+        downloadTermuxX11Apk(baseDir.absolutePath)
     }
 
     override suspend fun downloadFirefox() {
-        val downloadItems = createFirefoxDownloads()
-        downloads.putAll(downloadItems)
-
-        downloadFiles()
-    }
-
-    private fun createTmuxDownloads(): Map<String, DownloadItem> {
-        val baseDir = File(context.filesDir, "turmux_bootstrap")
-        if (!baseDir.exists()) baseDir.mkdirs()
-
-        return mapOf(
-            "tmux_arm64" to DownloadItem(
-                id = "tmux_arm64",
-                name = "ARM64 Tmux Bootstrap",
-                url = "https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4-arm64-android.tar.gz",
-                localPath = baseDir.absolutePath,
-                fileName = "tmux.arm64.tar.gz"
-            )
-        )
-    }
-
-    private fun createTmuxX11Downloads(): Map<String, DownloadItem> {
-        val baseDir = File(context.filesDir, "turmux_x11_bootstrap")
-        if (!baseDir.exists()) baseDir.mkdirs()
-
-        return mapOf(
-            "tmux_arm64_vnc" to DownloadItem(
-                id = "tmux_arm64_vnc",
-                name = "ARM64 VNC Tmux Bootstrap",
-                url = "https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4-arm64-android-vnc.tar.gz",
-                localPath = baseDir.absolutePath,
-                fileName = "tmux.arm64.vnc.tar.gz"
-            )
-        )
-    }
-
-    private fun createFirefoxDownloads(): Map<String, DownloadItem> {
         val baseDir = File(context.filesDir, "firefox")
         if (!baseDir.exists()) baseDir.mkdirs()
 
-        return mapOf(
-            "firefox_arm64" to DownloadItem(
-                id = "firefox_arm64",
-                name = "ARM64 Firefox",
-                url = "https://archive.mozilla.org/pub/firefox/releases/132.0/android-arm64/en-US/firefox-132.0.apk",
-                localPath = baseDir.absolutePath,
-                fileName = "firefox.arm64.apk"
-            )
+        val item = DownloadItem(
+            id = "firefox_arm64",
+            name = "Firefox Browser",
+            url = FIREFOX_APK_URL,
+            localPath = baseDir.absolutePath,
+            fileName = "firefox.apk"
         )
+        downloads[item.id] = item
+        downloadFiles()
     }
 
     private suspend fun downloadFiles() {
         withContext(Dispatchers.IO) {
             downloads.entries.toList().forEach { (id, item) ->
+                if (item.isComplete) return@forEach
                 try {
                     val url = URL(item.url)
                     val connection = url.openConnection() as HttpURLConnection
                     connection.connectTimeout = 30000
                     connection.readTimeout = 60000
+                    connection.instanceFollowRedirects = true
+
+                    val destFile = File(item.localPath, item.fileName)
+                    destFile.parentFile?.mkdirs()
 
                     val inputStream = connection.inputStream
-                    val outputStream = FileOutputStream(File(item.localPath, item.fileName))
+                    val outputStream = FileOutputStream(destFile)
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
 

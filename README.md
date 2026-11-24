@@ -133,24 +133,25 @@ linux-andriod/
 The multi-step [SetupActivity](setup/SetupActivity.kt) guides you through:
 
 1. **Distro Selection**: Choose from 9+ supported Linux distributions
-2. **Desktop Environment**: Add a desktop for Linux GUI apps
-3. **Recommended Browsers**: Choose Firefox or Chromium
-4. **Architecture**: Select ARM64 (libtermux) or x86_64
-5. **Window Manager**: Turmux, Turmux-X11, or none
+2. **Desktop Environment**: Add a desktop for Linux GUI apps (XFCE, GNOME, KDE, LXQt, etc.)
+3. **Recommended Browsers**: Pre-configured Firefox or Chromium
+4. **Architecture**: Select Native ARM64 or Emulated x86_64
+5. **Display & Window Manager**: Termux:X11 Display (:0), PRoot CLI, or Headless
 6. **Credentials**: Configure Linux username and password
 
 The wizard automatically suggests the best desktop environment and architecture based on your chosen distribution.
 
-## 💻 Session Access
+## 💻 Session Access & Real Termux:X11 Display
 
 The [SessionActivity](SessionActivity.kt) provides:
 
-- **Launch Button**: Start Linux shell in chroot
-- **Terminal View**: Real-time command output
-- **Resume Session**: Continue existing Linux environment
-- **Restart Button**: Reinitialize if something went wrong
+- **Boot Linux Environment**: Starts real distribution user space via PRoot container
+- **Open Termux:X11 Display**: Launches companion X11 display server (`com.termux.x11`) to render GUI desktops
+- **Copy Boot Command**: One-click copy of the PRoot boot script for running directly in Termux or any terminal
+- **Terminal View**: Real-time console and boot output
+- **Restart / Repair**: Reinitializes container configuration if needed
 
-All applications run with limited privileges for safety, but full Linux functionality is available.
+All applications run in user-space via PRoot without requiring root privileges.
 
 ## 📚 Documentation
 

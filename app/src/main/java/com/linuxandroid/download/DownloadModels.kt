@@ -1,6 +1,5 @@
 package com.linuxandroid.download
 
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 sealed interface DownloadState {
@@ -27,6 +26,8 @@ interface BootstrapDownloader {
     suspend fun downloadTmuxBootstrap()
     suspend fun downloadTmuxX11Bootstrap()
     suspend fun downloadFirefox()
+    suspend fun downloadDistribution(distro: String, arch: String, targetDir: String)
+    suspend fun downloadTermuxX11Apk(targetDir: String)
     fun markAsComplete(id: String)
     fun failDownload(id: String)
     fun reset()

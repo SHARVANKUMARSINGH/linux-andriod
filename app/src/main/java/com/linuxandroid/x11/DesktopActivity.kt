@@ -56,9 +56,11 @@ class DesktopActivity : AppCompatActivity() {
         btnExit = findViewById(R.id.btnExit)
         quickKeysBar = findViewById(R.id.quickKeysBar)
 
-        // Configure distro & desktop environment from session or intent
-        val distro = intent.getStringExtra("EXTRA_DISTRO") ?: sessionManager.distroName
-        val de = intent.getStringExtra("EXTRA_DESKTOP") ?: sessionManager.desktopEnv
+        // Configure distro & desktop environment from VM, session or intent
+        val vmId = intent.getStringExtra("EXTRA_VM_ID")
+        val vm = if (vmId != null) com.linuxandroid.vm.VmManager(this).getVm(vmId) else null
+        val distro = vm?.distro ?: intent.getStringExtra("EXTRA_DISTRO") ?: sessionManager.distroName
+        val de = vm?.desktopEnv ?: intent.getStringExtra("EXTRA_DESKTOP") ?: sessionManager.desktopEnv
         embeddedX11View.setDistroAndDE(distro, de)
 
         setupToolbarActions()
@@ -67,9 +69,10 @@ class DesktopActivity : AppCompatActivity() {
         // Attempt connection to local display server
         embeddedX11View.connectToLocalDisplay(5901)
 
+        val vmDisplayName = vm?.name ?: "$distro $de"
         Toast.makeText(
             this,
-            "🐧 Linux Desktop ($distro $de) Started!\nTap ⌨️ for keyboard, pinch to zoom",
+            "🐧 Linux VM ($vmDisplayName) Started!\nTap ⌨️ for keyboard, pinch to zoom",
             Toast.LENGTH_LONG
         ).show()
     }

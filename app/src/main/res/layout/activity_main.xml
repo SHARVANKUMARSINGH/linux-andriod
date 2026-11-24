@@ -1,71 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="#0F0F14"
+    tools:context=".MainActivity">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingBottom="96dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- Top Header Bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🐧 Linux VM Maker"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tvVmSummarySubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Virtual Machines &amp; PRoot Containers"
+                        android:textSize="12sp"
+                        android:textColor="#A0A0B0"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <!-- Quick Action Buttons in Header -->
+                <ImageButton
+                    android:id="@+id/btnHeaderSettings"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/key_button_bg"
+                    android:src="@android:drawable/ic_menu_preferences"
+                    android:contentDescription="Settings"
+                    android:layout_marginEnd="8dp" />
+
+                <ImageButton
+                    android:id="@+id/btnHeaderAbout"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/key_button_bg"
+                    android:src="@android:drawable/ic_menu_info_details"
+                    android:contentDescription="About" />
+
+            </LinearLayout>
+
+            <!-- Empty State Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEmptyState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="20dp"
+                app:cardBackgroundColor="#1A1A24"
+                app:strokeColor="#33FFFFFF"
+                app:strokeWidth="1dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💻"
+                        android:textSize="54sp"
+                        android:layout_marginBottom="12dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No Virtual Machines Yet"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Create your first Linux virtual machine. Ubuntu 24.04 LTS is pre-configured and ready to download (~45 MB base)."
+                        android:textColor="#9E9EB2"
+                        android:textSize="13sp"
+                        android:gravity="center"
+                        android:layout_marginBottom="20dp" />
+
+                    <Button
+                        android:id="@+id/btnQuickCreateUbuntu"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="⚡ Quick Create Ubuntu 24.04 LTS"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Machines List Section Header -->
+            <TextView
+                android:id="@+id/tvMachinesHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VIRTUAL MACHINES"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#888899"
+                android:letterSpacing="0.08"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Dynamic VM Cards Container -->
+            <LinearLayout
+                android:id="@+id/vmsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Floating Action Button (+ New Machine) -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabNewVm"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:text="+ New Machine"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        app:backgroundTint="@color/primary"
+        app:elevation="6dp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🐧 Linux on Android"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textColor="@color/primary"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="48dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Run Linux distributions on your Android device"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:textColor="@color/textSecondary"
-            android:layout_marginBottom="48dp"/>
-
-        <Button
-            android:id="@+id/startSetupButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Setup New Linux"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
-
-        <Button
-            android:id="@+id/startSessionButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Continue Session"
-            android:textSize="16sp"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp"/>
-
-        <Button
-            android:id="@+id/settingsButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="Settings"
-            android:textSize="14sp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginBottom="8dp"/>
-
-        <Button
-            android:id="@+id/aboutButton"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="About"
-            android:textSize="14sp"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_marginBottom="16dp"/>
-
-    </LinearLayout>
-</ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

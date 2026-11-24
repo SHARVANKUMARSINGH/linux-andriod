@@ -21,16 +21,16 @@ object LinuxBootloader {
         return when {
             normalized.contains("ubuntu") || normalized.contains("mint") || normalized.contains("zorin") || normalized.contains("pop") -> {
                 if (isArm64) {
-                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.1-base-arm64.tar.gz"
+                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.5-base-arm64.tar.gz"
                 } else {
-                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.1-base-amd64.tar.gz"
+                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.5-base-amd64.tar.gz"
                 }
             }
             normalized.contains("debian") -> {
                 if (isArm64) {
-                    "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-arm64/12/rootfs.tar.xz"
+                    "https://github.com/termux/proot-distro/releases/download/v4.29.0/debian-trixie-aarch64-pd-v4.29.0.tar.xz"
                 } else {
-                    "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/12/rootfs.tar.xz"
+                    "https://github.com/termux/proot-distro/releases/download/v4.29.0/debian-trixie-x86_64-pd-v4.29.0.tar.xz"
                 }
             }
             normalized.contains("alpine") -> {
@@ -42,30 +42,30 @@ object LinuxBootloader {
             }
             normalized.contains("arch") -> {
                 if (isArm64) {
-                    "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"
+                    "https://github.com/termux/proot-distro/releases/download/v4.29.0/archlinux-aarch64-pd-v4.29.0.tar.xz"
                 } else {
-                    "https://geo.mirror.pkgbuild.com/iso/latest/archlinux-bootstrap-x86_64.tar.zst"
+                    "https://github.com/termux/proot-distro/releases/download/v4.29.0/archlinux-x86_64-pd-v4.29.0.tar.xz"
                 }
             }
             normalized.contains("kali") -> {
                 if (isArm64) {
-                    "https://images.kali.org/arm-images/kali-linux-2024.3-rootfs-arm64.tar.xz"
+                    "https://kali.download/nethunter-images/current/rootfs/kali-nethunter-rootfs-minimal-arm64.tar.xz"
                 } else {
-                    "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-amd64/12/rootfs.tar.xz"
+                    "https://kali.download/nethunter-images/current/rootfs/kali-nethunter-rootfs-minimal-amd64.tar.xz"
                 }
             }
             normalized.contains("fedora") -> {
                 if (isArm64) {
-                    "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Container/aarch64/images/Fedora-Container-Base-Generic.aarch64-41-1.4.tar.xz"
+                    "https://github.com/termux/proot-distro/releases/download/v4.29.0/fedora-aarch64-pd-v4.29.0.tar.xz"
                 } else {
-                    "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Container/x86_64/images/Fedora-Container-Base-Generic.x86_64-41-1.4.tar.xz"
+                    "https://github.com/termux/proot-distro/releases/download/v4.29.0/fedora-x86_64-pd-v4.29.0.tar.xz"
                 }
             }
             else -> {
                 if (isArm64) {
-                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.1-base-arm64.tar.gz"
+                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.5-base-arm64.tar.gz"
                 } else {
-                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.1-base-amd64.tar.gz"
+                    "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.5-base-amd64.tar.gz"
                 }
             }
         }

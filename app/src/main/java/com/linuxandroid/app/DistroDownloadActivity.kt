@@ -18,6 +18,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.linuxandroid.R
+import com.linuxandroid.proot.LinuxBootloader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -81,14 +82,14 @@ class DistroDownloadActivity : AppCompatActivity() {
     )
 
     private val distributionUrls = mapOf(
-        "Ubuntu ARM64 (recommended)" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/ubuntu-arm64.tar.xz",
-        "Debian ARM64" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/debian-arm64.tar.xz",
-        "Arch Linux ARM" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/arch-arm64.tar.xz",
-        "Fedora ARM" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/fedora-arm64.tar.xz",
-        "Alpine Linux ARM" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/alpine-arm64.tar.xz",
-        "Manjaro ARM" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/manjaro-arm64.tar.xz",
-        "Kali ARM64" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/kali-arm64.tar.xz",
-        "Pop!_OS ARM64" to "https://github.com/AntGravi/linux-on-android-bootstrap/releases/latest/download/pop-arm64.tar.xz"
+        "Ubuntu ARM64 (recommended)" to LinuxBootloader.getRootfsUrl("ubuntu", "arm64"),
+        "Debian ARM64" to LinuxBootloader.getRootfsUrl("debian", "arm64"),
+        "Arch Linux ARM" to LinuxBootloader.getRootfsUrl("arch", "arm64"),
+        "Fedora ARM" to LinuxBootloader.getRootfsUrl("fedora", "arm64"),
+        "Alpine Linux ARM" to LinuxBootloader.getRootfsUrl("alpine", "arm64"),
+        "Manjaro ARM" to LinuxBootloader.getRootfsUrl("arch", "arm64"),
+        "Kali ARM64" to LinuxBootloader.getRootfsUrl("kali", "arm64"),
+        "Pop!_OS ARM64" to LinuxBootloader.getRootfsUrl("pop", "arm64")
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
+import org.tukaani.xz.XZInputStream
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -43,10 +45,9 @@ class VmInstaller(
 
     suspend fun installVm(vm: LinuxVm, listener: InstallListener) = withContext(Dispatchers.IO) {
         val rootfsDir = File(vm.rootfsPath)
-        val tempDownloadFile = File(context.cacheDir, "rootfs_${vm.id}.tar.gz")
 
         try {
-            // Stage 1: Connecting to mirror
+            // Stage 1: Connecting to mirror (with dynamic healing & fallback)
             listener.onProgress(
                 stage = "Connecting to mirror...",
                 bytesDownloaded = 0,
@@ -55,19 +56,20 @@ class VmInstaller(
                 speedText = "Connecting..."
             )
 
-            val request = Request.Builder()
-                .url(vm.mirrorUrl)
-                .header("User-Agent", "LinuxOnAndroid/2.0 (Android; ARM64)")
-                .build()
-
-            val response = client.newCall(request).execute()
-            if (!response.isSuccessful) {
-                listener.onError("Mirror HTTP error: ${response.code} ${response.message}")
+            val mirrorConnection = connectToMirrorWithFallback(vm, listener)
+            if (mirrorConnection == null) {
+                listener.onError("Mirror HTTP error: Unable to connect to mirror or live fallbacks for ${vm.distro}")
                 return@withContext
             }
 
+            val (response, activeMirrorUrl) = mirrorConnection
             val body = response.body ?: throw IllegalStateException("Empty mirror response body")
             val totalBytes = body.contentLength()
+
+            val ext = if (activeMirrorUrl.endsWith(".xz")) ".tar.xz"
+            else if (activeMirrorUrl.endsWith(".zst")) ".tar.zst"
+            else ".tar.gz"
+            val tempDownloadFile = File(context.cacheDir, "rootfs_${vm.id}$ext")
 
             // Stage 2: Streaming Download
             val inputStream = body.byteStream()
@@ -207,17 +209,27 @@ class VmInstaller(
     }
 
     private fun extractArchive(archiveFile: File, targetDir: File) {
+        var stream: InputStream? = null
         try {
             val fileIn = FileInputStream(archiveFile)
             val isGzip = archiveFile.name.endsWith(".gz") || isGzipStream(archiveFile)
-            val stream: InputStream = if (isGzip) GZIPInputStream(BufferedInputStream(fileIn)) else BufferedInputStream(fileIn)
+            val isXz = archiveFile.name.endsWith(".xz") || isXzStream(archiveFile)
+            stream = when {
+                isGzip -> GZIPInputStream(BufferedInputStream(fileIn))
+                isXz -> XZInputStream(BufferedInputStream(fileIn))
+                else -> BufferedInputStream(fileIn)
+            }
 
             extractTarStream(stream, targetDir)
-            stream.close()
-            fileIn.close()
         } catch (e: Exception) {
             // If tarball extraction has partial entries, ensure base structure exists
             ensureBaseStructure(targetDir)
+        } finally {
+            try {
+                stream?.close()
+            } catch (e: Exception) {
+                // Ignore
+            }
         }
     }
 
@@ -231,6 +243,146 @@ class VmInstaller(
         } catch (e: Exception) {
             false
         }
+    }
+
+    private fun isXzStream(file: File): Boolean {
+        return try {
+            FileInputStream(file).use { fis ->
+                val b = ByteArray(6)
+                val read = fis.read(b)
+                read == 6 &&
+                        b[0] == 0xFD.toByte() &&
+                        b[1] == 0x37.toByte() &&
+                        b[2] == 0x7A.toByte() &&
+                        b[3] == 0x58.toByte() &&
+                        b[4] == 0x5A.toByte() &&
+                        b[5] == 0x00.toByte()
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Attempts to connect to the mirror. If the configured URL fails (e.g. 404 from point release updates),
+     * queries the mirror directory or tries known valid fallback mirrors and updates the VM mirror URL.
+     */
+    private fun connectToMirrorWithFallback(vm: LinuxVm, listener: InstallListener): Pair<Response, String>? {
+        val initialUrl = vm.mirrorUrl
+        try {
+            val req = Request.Builder()
+                .url(initialUrl)
+                .header("User-Agent", "LinuxOnAndroid/2.0 (Android; ARM64)")
+                .build()
+            val resp = client.newCall(req).execute()
+            if (resp.isSuccessful && resp.body != null) {
+                return Pair(resp, initialUrl)
+            }
+            resp.close()
+        } catch (e: Exception) {
+            // Initial URL failed, proceed to fallback discovery
+        }
+
+        listener.onProgress(
+            stage = "Resolving active mirror for ${vm.distro}...",
+            bytesDownloaded = 0,
+            totalBytes = 0,
+            percentage = 3,
+            speedText = "Discovering..."
+        )
+
+        val isArm64 = vm.architecture.contains("arm", ignoreCase = true) ||
+                vm.architecture.contains("aarch64", ignoreCase = true)
+        val archTag = if (isArm64) "arm64" else "amd64"
+        val prootArch = if (isArm64) "aarch64" else "x86_64"
+
+        val candidateUrls = mutableListOf<String>()
+
+        val isUbuntuFamily = vm.distro.contains("ubuntu", ignoreCase = true) ||
+                vm.distro.contains("mint", ignoreCase = true) ||
+                vm.distro.contains("zorin", ignoreCase = true) ||
+                vm.distro.contains("pop", ignoreCase = true) ||
+                initialUrl.contains("ubuntu-base", ignoreCase = true)
+
+        if (isUbuntuFamily) {
+            // Dynamic discovery by scraping Canonical 24.04 release index for latest point releases
+            try {
+                val indexReq = Request.Builder()
+                    .url("https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/")
+                    .header("User-Agent", "LinuxOnAndroid/2.0")
+                    .build()
+                client.newCall(indexReq).execute().use { indexResp ->
+                    if (indexResp.isSuccessful) {
+                        val html = indexResp.body?.string() ?: ""
+                        val regex = Regex("""ubuntu-base-24\.04\.([0-9]+)-base-${archTag}\.tar\.gz""")
+                        val pointReleases = regex.findAll(html)
+                            .mapNotNull { it.groupValues[1].toIntOrNull() }
+                            .distinct()
+                            .sortedDescending()
+                            .toList()
+                        for (p in pointReleases) {
+                            candidateUrls.add("https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.$p-base-$archTag.tar.gz")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore and proceed to static fallbacks
+            }
+
+            candidateUrls.add("https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.5-base-$archTag.tar.gz")
+            candidateUrls.add("https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.4-base-$archTag.tar.gz")
+            candidateUrls.add("https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.3-base-$archTag.tar.gz")
+            candidateUrls.add("https://cdimage.ubuntu.com/ubuntu-base/releases/22.04/release/ubuntu-base-22.04.5-base-$archTag.tar.gz")
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/ubuntu-plucky-$prootArch-pd-v4.29.0.tar.xz")
+        }
+
+        if (vm.distro.contains("debian", ignoreCase = true) || initialUrl.contains("debian", ignoreCase = true)) {
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/debian-trixie-$prootArch-pd-v4.29.0.tar.xz")
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/debian-bookworm-$prootArch-pd-v4.29.0.tar.xz")
+        }
+
+        if (vm.distro.contains("kali", ignoreCase = true) || initialUrl.contains("kali", ignoreCase = true)) {
+            candidateUrls.add("https://kali.download/nethunter-images/current/rootfs/kali-nethunter-rootfs-minimal-$archTag.tar.xz")
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/kali-rolling-$prootArch-pd-v4.29.0.tar.xz")
+        }
+
+        if (vm.distro.contains("alpine", ignoreCase = true) || initialUrl.contains("alpine", ignoreCase = true)) {
+            candidateUrls.add("https://dl-cdn.alpinelinux.org/alpine/v3.21/releases/$prootArch/alpine-minirootfs-3.21.0-$prootArch.tar.gz")
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/alpine-$prootArch-pd-v4.29.0.tar.xz")
+        }
+
+        if (vm.distro.contains("arch", ignoreCase = true) || initialUrl.contains("arch", ignoreCase = true)) {
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/archlinux-$prootArch-pd-v4.29.0.tar.xz")
+        }
+
+        if (vm.distro.contains("fedora", ignoreCase = true) || initialUrl.contains("fedora", ignoreCase = true)) {
+            candidateUrls.add("https://github.com/termux/proot-distro/releases/download/v4.29.0/fedora-$prootArch-pd-v4.29.0.tar.xz")
+        }
+
+        for (candidate in candidateUrls.distinct()) {
+            if (candidate == initialUrl) continue
+            try {
+                val candidateReq = Request.Builder()
+                    .url(candidate)
+                    .header("User-Agent", "LinuxOnAndroid/2.0 (Android; ARM64)")
+                    .build()
+                val candidateResp = client.newCall(candidateReq).execute()
+                if (candidateResp.isSuccessful && candidateResp.body != null) {
+                    vm.mirrorUrl = candidate
+                    try {
+                        vmManager.saveVm(vm)
+                    } catch (e: Exception) {
+                        // Non-critical
+                    }
+                    return Pair(candidateResp, candidate)
+                }
+                candidateResp.close()
+            } catch (e: Exception) {
+                // Try next
+            }
+        }
+
+        return null
     }
 
     /**

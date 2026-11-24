@@ -1,0 +1,28 @@
+# Android build & cache files
+*.apk
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+build/
+.gradle/
+local.properties
+Captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Logs
+*.log
+
+# Proguard
+proguard/

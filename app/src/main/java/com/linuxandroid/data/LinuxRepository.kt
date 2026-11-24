@@ -40,13 +40,13 @@ class LinuxRepository {
             id = "pop",
             name = "pop",
             description = "Pop!_OS - An Ubuntu-based distribution developed by System76",
-            iconRes = android.R.drawable.ic_dialog_star
+            iconRes = android.R.drawable.btn_star
         ),
         LinuxDistro(
             id = "manjaro",
             name = "manjaro",
             description = "Manjaro - A user-friendly Linux distribution based on Arch",
-            iconRes = android.R.drawable.ic_dialog_gallery
+            iconRes = android.R.drawable.ic_menu_gallery
         )
     )
 

@@ -152,12 +152,6 @@ class SetupActivity : AppCompatActivity() {
         installButton.isEnabled = false
         statusText.text = "Preparing ${distro} installation..."
 
-        val portal = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            android.app.ActivityManager.AppTask
-        } else {
-            null
-        }
-
         // Start the session activity
         val sessionManager = SessionManager(this)
         sessionManager.initialize(

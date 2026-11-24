@@ -106,7 +106,63 @@
                     android:textColor="#FFFFFF"
                     android:textSize="15sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="4dp" />
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Category Filter Chips -->
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:layout_marginBottom="10dp">
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupCategory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipGuiDesktop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🖥️ Desktop GUI OS"
+                            android:checked="true"
+                            style="@style/Widget.Material3.Chip.Filter" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMinimalLts"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚡ Minimal LTS"
+                            style="@style/Widget.Material3.Chip.Filter" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipSecurity"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🛡️ Pentesting GUI"
+                            style="@style/Widget.Material3.Chip.Filter" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipCustom"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💿 Custom ISO / URL"
+                            style="@style/Widget.Material3.Chip.Filter" />
+
+                    </com.google.android.material.chip.ChipGroup>
+                </HorizontalScrollView>
+
+                <TextView
+                    android:id="@+id/tvGuiFeatureBadge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="✨ Pre-Configured Graphical Desktop: Includes Start Menu, Taskbar, Web Browser, Audio &amp; Window Manager"
+                    android:textColor="#00FF66"
+                    android:textSize="11sp"
+                    android:background="#2000FF66"
+                    android:padding="8dp"
+                    android:layout_marginBottom="10dp" />
 
                 <TextView
                     android:id="@+id/tvDistroHint"

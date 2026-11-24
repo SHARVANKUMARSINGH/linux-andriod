@@ -19,7 +19,7 @@ object LinuxBootloader {
         val normalized = distroName.lowercase()
 
         return when {
-            normalized.contains("ubuntu") -> {
+            normalized.contains("ubuntu") || normalized.contains("mint") || normalized.contains("zorin") || normalized.contains("pop") -> {
                 if (isArm64) {
                     "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.1-base-arm64.tar.gz"
                 } else {

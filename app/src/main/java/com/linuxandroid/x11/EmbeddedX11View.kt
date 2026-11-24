@@ -410,12 +410,56 @@ class EmbeddedX11View @JvmOverloads constructor(
         val w = desktopWidth.toFloat()
         val h = desktopHeight.toFloat()
 
-        // 1. Wallpaper background (sleek Linux gradient)
+        val isMint = distroName.contains("Mint", ignoreCase = true)
+        val isZorin = distroName.contains("Zorin", ignoreCase = true)
+        val isUbuntu = distroName.contains("Ubuntu", ignoreCase = true)
+        val isPop = distroName.contains("Pop", ignoreCase = true)
+        val isKali = distroName.contains("Kali", ignoreCase = true)
+        val isFedora = distroName.contains("Fedora", ignoreCase = true)
+
+        val bgStart = when {
+            isMint -> "#18261e"
+            isZorin -> "#0d1b2a"
+            isUbuntu -> "#2d0a27"
+            isPop -> "#1e2024"
+            isKali -> "#0a0f18"
+            isFedora -> "#152238"
+            else -> "#1a1a2e"
+        }
+        val bgEnd = when {
+            isMint -> "#101914"
+            isZorin -> "#17283c"
+            isUbuntu -> "#1c0518"
+            isPop -> "#141618"
+            isKali -> "#05080e"
+            isFedora -> "#0c1524"
+            else -> "#16213e"
+        }
+        val brandAccent = when {
+            isMint -> "#2ecc71"
+            isZorin -> "#00a2ff"
+            isUbuntu -> "#e95420"
+            isPop -> "#48b9c7"
+            isKali -> "#00e5ff"
+            isFedora -> "#3c6eb4"
+            else -> "#6200ee"
+        }
+        val menuText = when {
+            isMint -> "🍃 Menu"
+            isZorin -> "🔷 Zorin"
+            isUbuntu -> "🟠 Activities"
+            isPop -> "🚀 COSMIC"
+            isKali -> "🐉 Kali"
+            isFedora -> "🎩 Fedora"
+            else -> "Applications"
+        }
+
+        // 1. Wallpaper background (sleek OS-tailored gradient)
         val bgPaint = Paint().apply {
             shader = android.graphics.LinearGradient(
                 0f, 0f, w, h,
-                Color.parseColor("#1a1a2e"),
-                Color.parseColor("#16213e"),
+                Color.parseColor(bgStart),
+                Color.parseColor(bgEnd),
                 android.graphics.Shader.TileMode.CLAMP
             )
         }
@@ -424,69 +468,76 @@ class EmbeddedX11View @JvmOverloads constructor(
         // Subtle desktop logo / distro watermark in center
         val watermarkPaint = Paint().apply {
             color = Color.parseColor("#25FFFFFF")
-            textSize = 56f
+            textSize = 52f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
-        fbCanvas.drawText("🐧 $distroName ($desktopEnv)", w / 2f, h / 2f - 40f, watermarkPaint)
+        fbCanvas.drawText("$distroName ($desktopEnv)", w / 2f, h / 2f - 40f, watermarkPaint)
 
         val hintPaint = Paint().apply {
             color = Color.parseColor("#40FFFFFF")
-            textSize = 18f
+            textSize = 17f
             isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
-        fbCanvas.drawText("Embedded Linux on Android • Display :0", w / 2f, h / 2f + 10f, hintPaint)
+        fbCanvas.drawText("GUI Virtual Machine on Android • Display :0 • Sound: PulseAudio", w / 2f, h / 2f + 10f, hintPaint)
 
-        // 2. Desktop top/bottom panel (XFCE / GNOME style)
-        val panelHeight = 36f
+        // 2. Desktop panel (Cinnamon bottom panel for Mint/Zorin, top panel for GNOME/Ubuntu)
+        val panelHeight = 38f
+        val isBottomPanel = isMint || isZorin
+        val panelTop = if (isBottomPanel) h - panelHeight else 0f
+        val panelBottom = if (isBottomPanel) h else panelHeight
+
         val panelPaint = Paint().apply {
-            color = Color.parseColor("#E61E1E2E")
+            color = Color.parseColor("#EB161820")
             style = Paint.Style.FILL
         }
-        fbCanvas.drawRect(0f, 0f, w, panelHeight, panelPaint)
+        fbCanvas.drawRect(0f, panelTop, w, panelBottom, panelPaint)
 
-        // Application menu button
+        // Application menu button with OS brand accent
         val menuBtnPaint = Paint().apply {
-            color = Color.parseColor("#33FFFFFF")
+            color = Color.parseColor(brandAccent)
             style = Paint.Style.FILL
         }
-        fbCanvas.drawRoundRect(8f, 4f, 130f, panelHeight - 4f, 6f, 6f, menuBtnPaint)
+        fbCanvas.drawRoundRect(8f, panelTop + 4f, 135f, panelBottom - 4f, 8f, 8f, menuBtnPaint)
 
         val menuTextPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 14f
+            textSize = 13f
             isAntiAlias = true
             isFakeBoldText = true
         }
-        fbCanvas.drawText("Applications", 20f, 23f, menuTextPaint)
+        fbCanvas.drawText(menuText, 18f, panelTop + 24f, menuTextPaint)
 
         // Panel Window Items (Terminal, Firefox, Files)
         val itemPaint = Paint().apply {
             color = Color.parseColor("#22FFFFFF")
             style = Paint.Style.FILL
         }
-        fbCanvas.drawRoundRect(140f, 4f, 260f, panelHeight - 4f, 4f, 4f, itemPaint)
-        fbCanvas.drawText("⬛ Terminal", 150f, 23f, textPaint)
+        fbCanvas.drawRoundRect(145f, panelTop + 4f, 265f, panelBottom - 4f, 6f, 6f, itemPaint)
+        fbCanvas.drawText("⬛ Terminal", 155f, panelTop + 24f, textPaint)
 
-        fbCanvas.drawRoundRect(270f, 4f, 390f, panelHeight - 4f, 4f, 4f, itemPaint)
-        fbCanvas.drawText("🦊 Firefox", 280f, 23f, textPaint)
+        fbCanvas.drawRoundRect(275f, panelTop + 4f, 395f, panelBottom - 4f, 6f, 6f, itemPaint)
+        fbCanvas.drawText("🦊 Firefox", 285f, panelTop + 24f, textPaint)
+
+        fbCanvas.drawRoundRect(405f, panelTop + 4f, 515f, panelBottom - 4f, 6f, 6f, itemPaint)
+        fbCanvas.drawText("📁 Files", 418f, panelTop + 24f, textPaint)
 
         // Clock & status on right side of panel
         val timeStr = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
         val clockPaint = Paint().apply {
             color = Color.WHITE
-            textSize = 14f
+            textSize = 13f
             isAntiAlias = true
             textAlign = Paint.Align.RIGHT
         }
-        fbCanvas.drawText("$timeStr  |  🔊 100%  |  📶", w - 16f, 23f, clockPaint)
+        fbCanvas.drawText("$timeStr  |  🔊 100%  |  📶 WiFi", w - 16f, panelTop + 24f, clockPaint)
 
         // 3. Open Terminal Window on desktop
-        val winLeft = 80f
-        val winTop = 60f
-        val winRight = minOf(w - 80f, 950f)
-        val winBottom = minOf(h - 50f, 620f)
+        val winLeft = 70f
+        val winTop = if (isBottomPanel) 40f else 55f
+        val winRight = minOf(w - 70f, 960f)
+        val winBottom = if (isBottomPanel) minOf(h - 55f, 600f) else minOf(h - 40f, 620f)
 
         // Window shadow & body
         val winBodyPaint = Paint().apply {

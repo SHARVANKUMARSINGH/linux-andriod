@@ -29,6 +29,8 @@ data class DistroPreset(
     val shortDesc: String,
     val isLts: Boolean,
     val isRecommended: Boolean,
+    val isGuiBased: Boolean = true,
+    val category: String = "desktop_gui",
     val arm64Url: String,
     val x86_64Url: String,
     val defaultDesktop: String,

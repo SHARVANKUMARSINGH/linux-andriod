@@ -110,7 +110,7 @@ linux-andriod/
 
 3. **Download Project**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/linux-andriod.git
+   git clone https://github.com/SHARVANKUMARSINGH/linux-andriod.git
    cd linux-andriod
    ```
 
@@ -231,8 +231,8 @@ Built with:
 
 ## 🙋 Support
 
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/linux-andriod/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_USERNAME/linux-andriod/discussions)
+- **Issues**: [GitHub Issues](https://github.com/SHARVANKUMARSINGH/linux-andriod/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/SHARVANKUMARSINGH/linux-andriod/discussions)
 - **Contributing**: [Contributing Guide](CONTRIBUTING.md)
 
 ## 📈 Roadmap

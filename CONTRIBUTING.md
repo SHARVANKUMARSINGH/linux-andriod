@@ -36,7 +36,7 @@ Click the "Fork" button at the top right of the repository page.
 
 ### 2. Clone Your Fork
 ```bash
-git clone https://github.com/YOUR_USERNAME/linux-andriod.git
+git clone https://github.com/SHARVANKUMARSINGH/linux-andriod.git
 cd linux-andriod
 ```
 

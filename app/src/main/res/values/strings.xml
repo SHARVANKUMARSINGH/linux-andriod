@@ -49,4 +49,10 @@
     <string name="fetching_updates">Fetching distribution updates…</string>
     <string name="use_emulation">Use Emulation</string>
     <string name="use_native">Use Native</string>
+    <string name="display_mode_label">Desktop Display Mode</string>
+    <string name="embedded_display_mode">Embedded In-App Desktop (No Companion App Needed)</string>
+    <string name="termux_x11_display_mode">External Termux:X11 Companion</string>
+    <string name="cli_display_mode">PRoot Terminal Mode (CLI)</string>
+    <string name="launch_embedded_desktop">Launch Embedded Desktop</string>
+    <string name="open_in_app_desktop">Open In-App Desktop</string>
 </resources>

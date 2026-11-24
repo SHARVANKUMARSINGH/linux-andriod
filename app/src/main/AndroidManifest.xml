@@ -41,6 +41,13 @@
             android:theme="@style/Theme.LinuxAndroid"/>
 
         <activity
+            android:name=".x11.DesktopActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.LinuxAndroid"/>
+
+        <activity
             android:name=".setup.SetupActivity"
             android:exported="false"
             android:theme="@style/Theme.LinuxAndroid"/>

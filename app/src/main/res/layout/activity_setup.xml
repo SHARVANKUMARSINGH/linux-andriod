@@ -25,11 +25,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/setup_subtitle"
+            android:text="Configure real Linux on Android with Embedded X11 display"
             android:textSize="14sp"
             android:gravity="center"
             android:textColor="@color/textSecondary"
-            android:layout_marginBottom="32dp"/>
+            android:layout_marginBottom="28dp"/>
 
         <!-- Distro Selection -->
         <TextView
@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/spinner_background"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="20dp"/>
 
         <!-- Arch Selection -->
         <TextView
@@ -61,7 +61,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="20dp">
 
             <RadioButton
                 android:id="@+id/arm64Radio"
@@ -93,13 +93,13 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/spinner_background"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="20dp"/>
 
-        <!-- Window Manager Selection -->
+        <!-- Display & Window Manager Selection -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/window_manager_label"
+            android:text="@string/display_mode_label"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp"/>
@@ -109,13 +109,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="20dp">
 
             <RadioButton
-                android:id="@+id/turmuxRadio"
+                android:id="@+id/embeddedDisplayRadio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/turmux_bootstrap"
+                android:text="✨ Embedded In-App Desktop (Recommended - No external apps)"
                 android:checked="true"/>
 
             <RadioButton
@@ -123,6 +123,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/turmux_x11_bootstrap"/>
+
+            <RadioButton
+                android:id="@+id/turmuxRadio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/turmux_bootstrap"/>
 
             <RadioButton
                 android:id="@+id/noWMRadio"
@@ -146,9 +152,17 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/spinner_background"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="20dp"/>
 
-        <!-- Status Text -->
+        <!-- Status & Progress -->
+        <ProgressBar
+            android:id="@+id/setupProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp"/>
+
         <TextView
             android:id="@+id/statusText"
             android:layout_width="match_parent"
@@ -163,7 +177,7 @@
             android:id="@+id/installButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="@string/install_button"
+            android:text="Install &amp; Launch Linux"
             android:textSize="18sp"
             android:textStyle="bold"
             android:elevation="4dp"

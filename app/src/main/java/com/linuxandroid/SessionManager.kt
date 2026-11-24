@@ -23,6 +23,7 @@ class SessionManager(private val context: Context) {
         private const val USERNAME = "username"
         private const val PASSWORD = "password"
         private const val LAST_DISTRO = "last_distro"
+        private const val DISPLAY_MODE = "display_mode"
     }
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -34,7 +35,8 @@ class SessionManager(private val context: Context) {
         browser: String,
         windowManager: String,
         useLibTermux: Boolean,
-        showTUI: Boolean
+        showTUI: Boolean,
+        displayMode: String = "embedded"
     ) {
         prefs.edit().apply {
             putString(DISTRO_NAME, distroName)
@@ -44,6 +46,7 @@ class SessionManager(private val context: Context) {
             putString(WINDOW_MANAGER, windowManager)
             putBoolean(USE_LIB_TERMUX, useLibTermux)
             putBoolean(SHOW_TUI, showTUI)
+            putString(DISPLAY_MODE, displayMode)
             putBoolean(HAS_SESSION, true)
             putLong(SESSION_TIME, System.currentTimeMillis())
             putString(USERNAME, "root")
@@ -62,7 +65,8 @@ class SessionManager(private val context: Context) {
         browser = browser,
         windowManager = windowManager,
         useLibTermux = useLibTermux,
-        showTUI = showTUI
+        showTUI = showTUI,
+        displayMode = displayMode
     )
 
     fun hasSession(): Boolean = prefs.getBoolean(HAS_SESSION, false)
@@ -102,6 +106,16 @@ class SessionManager(private val context: Context) {
     val lastDistro: String
         get() = prefs.getString(LAST_DISTRO, "session") ?: "session"
 
+    val displayMode: String
+        get() = prefs.getString(DISPLAY_MODE, "embedded") ?: "embedded"
+
+    val isEmbeddedDisplay: Boolean
+        get() = displayMode == "embedded"
+
+    fun setDisplayMode(mode: String) {
+        prefs.edit().putString(DISPLAY_MODE, mode).apply()
+    }
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }
@@ -127,5 +141,6 @@ data class SetupData(
     val browser: String,
     val windowManager: String,
     val useLibTermux: Boolean,
-    val showTUI: Boolean
+    val showTUI: Boolean,
+    val displayMode: String = "embedded"
 )

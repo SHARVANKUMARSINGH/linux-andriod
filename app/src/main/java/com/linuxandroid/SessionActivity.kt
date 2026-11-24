@@ -3,6 +3,7 @@ package com.linuxandroid
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -14,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.linuxandroid.proot.LinuxBootloader
+import com.linuxandroid.x11.DesktopActivity
 import com.linuxandroid.x11.X11Manager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,7 @@ class SessionActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var detailText: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var openEmbeddedButton: Button
     private lateinit var launchButton: Button
     private lateinit var openX11Button: Button
     private lateinit var copyCommandButton: Button
@@ -55,6 +58,7 @@ class SessionActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         detailText = findViewById(R.id.detailText)
         progressBar = findViewById(R.id.progressBar)
+        openEmbeddedButton = findViewById(R.id.openEmbeddedButton)
         launchButton = findViewById(R.id.launchButton)
         openX11Button = findViewById(R.id.openX11Button)
         copyCommandButton = findViewById(R.id.copyCommandButton)
@@ -68,6 +72,14 @@ class SessionActivity : AppCompatActivity() {
             showSessionStatus()
         } else {
             startSetup()
+        }
+
+        openEmbeddedButton.setOnClickListener {
+            val intent = Intent(this, DesktopActivity::class.java).apply {
+                putExtra("EXTRA_DISTRO", sessionManager.distroName)
+                putExtra("EXTRA_DESKTOP", sessionManager.desktopEnv)
+            }
+            startActivity(intent)
         }
 
         launchButton.setOnClickListener {
@@ -97,6 +109,7 @@ class SessionActivity : AppCompatActivity() {
         statusText.text = "Environment Ready: ${setupData.distroName}"
         detailText.text = "${setupData.distroName} (${setupData.desktopEnv}) on ${setupData.architecture}\nX11 Display: :0"
 
+        openEmbeddedButton.visibility = View.VISIBLE
         launchButton.visibility = View.VISIBLE
         copyCommandButton.visibility = View.VISIBLE
         restartButton.visibility = View.VISIBLE
@@ -139,6 +152,7 @@ class SessionActivity : AppCompatActivity() {
             progressBar.visibility = View.VISIBLE
             statusText.text = "Configuring Linux PRoot Container..."
             detailText.text = "Setting up root filesystem and X11 display linkage..."
+            openEmbeddedButton.visibility = View.GONE
             launchButton.visibility = View.GONE
             openX11Button.visibility = View.GONE
             copyCommandButton.visibility = View.GONE

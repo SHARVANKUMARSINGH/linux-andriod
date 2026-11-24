@@ -1,16 +1,30 @@
 package com.linuxandroid.setup
 
+import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.linuxandroid.R
+import com.linuxandroid.SessionActivity
 import com.linuxandroid.SessionManager
+import com.linuxandroid.proot.LinuxBootloader
+import com.linuxandroid.x11.DesktopActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class SetupActivity : AppCompatActivity() {
 
@@ -20,55 +34,53 @@ class SetupActivity : AppCompatActivity() {
     private lateinit var archRadioGroup: RadioGroup
     private lateinit var windowManagerRadioGroup: RadioGroup
     private lateinit var installButton: Button
-    private lateinit var statusText: android.widget.TextView
+    private lateinit var statusText: TextView
+    private var setupProgressBar: ProgressBar? = null
 
     private val distros = arrayOf(
-        "Alpine Linux",
-        "Arch Linux",
-        "Ubuntu",
-        "Debian",
-        "Fedora",
+        "Ubuntu 24.04 LTS",
+        "Debian 12 Bookworm",
         "Kali Linux",
+        "Arch Linux",
+        "Alpine Linux",
+        "Fedora 41",
         "Manjaro",
+        "Pop!_OS",
         "EndeavourOS",
         "Garuda Linux"
     )
 
     private val desktopEnvs = arrayOf(
-        "Gnome",
-        "KDE Plasma",
-        "XFCE",
-        "LXQt",
-        "MATE",
-        "Cinnamon",
-        "i3WM",
-        "Sway",
-        "No Desktop"
+        "XFCE (Recommended, Lightweight)",
+        "GNOME (Modern Desktop)",
+        "KDE Plasma (Feature Rich)",
+        "LXQt (Ultra Lightweight)",
+        "MATE (Classic Desktop)",
+        "Cinnamon (Sleek)",
+        "i3WM (Tiling Window Manager)",
+        "Terminal Only (CLI)"
     )
 
     private val browsers = arrayOf(
-        "Firefox",
+        "Firefox (Optimized)",
         "Chromium",
         "None"
     )
 
     private val distroDefaults = mapOf(
-        "Alpine Linux" to "xfce4",
-        "Arch Linux" to "gnome",
-        "Ubuntu" to "gnome",
-        "Debian" to "gnome",
-        "Fedora" to "kde",
-        "Kali Linux" to "gnome",
-        "Manjaro" to "plasma",
-        "EndeavourOS" to "gnome",
-        "Garuda Linux" to "plasma"
+        "Ubuntu 24.04 LTS" to "XFCE",
+        "Debian 12 Bookworm" to "XFCE",
+        "Kali Linux" to "XFCE",
+        "Arch Linux" to "XFCE",
+        "Alpine Linux" to "XFCE",
+        "Fedora 41" to "GNOME",
+        "Manjaro" to "KDE Plasma",
+        "Pop!_OS" to "GNOME",
+        "EndeavourOS" to "XFCE",
+        "Garuda Linux" to "KDE Plasma"
     )
 
-    private val browserDefaults = mapOf(
-        "Firefox" to "firefox-esr",
-        "Chromium" to "chromium",
-        "None" to ""
-    )
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +93,7 @@ class SetupActivity : AppCompatActivity() {
         archRadioGroup = findViewById(R.id.archRadioGroup)
         windowManagerRadioGroup = findViewById(R.id.windowManagerRadioGroup)
         installButton = findViewById(R.id.installButton)
+        setupProgressBar = findViewById(R.id.setupProgressBar)
 
         // Set up distro spinner
         val distroAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, distros)
@@ -88,8 +101,8 @@ class SetupActivity : AppCompatActivity() {
         distroSpinner.adapter = distroAdapter
 
         distroSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: android.view.View?, position: Int, id: Long) {
-                updateDesktopSpinner(distroDefaults[distros[position]] ?: "gnome")
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                updateDesktopSpinner(distroDefaults[distros[position]] ?: "XFCE")
                 checkARM64Needed()
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
@@ -114,72 +127,118 @@ class SetupActivity : AppCompatActivity() {
     }
 
     private fun updateDesktopSpinner(defaultStr: String) {
-        val sortedEnvs = desktopEnvs.sortedBy { it.contains(defaultStr, ignoreCase = true) }
+        val sortedEnvs = desktopEnvs.sortedByDescending { it.contains(defaultStr, ignoreCase = true) }
         val desktopAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, sortedEnvs)
         desktopAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         desktopSpinner.adapter = desktopAdapter
     }
 
     private fun checkARM64Needed() {
-        val selectedDistro = distroSpinner.selectedItem.toString()
-        val isARM64Needed = selectedDistro == "Alpine Linux" ||
-            selectedDistro == "Arch Linux" ||
-            selectedDistro == "Kali Linux" ||
-            selectedDistro == "Ubuntu" ||
-            selectedDistro == "Debian"
-
-        findViewById<RadioButton>(R.id.arm64Radio).isEnabled = isARM64Needed
-        if (!isARM64Needed) {
-            findViewById<RadioButton>(R.id.x86_64Radio).isChecked = true
-        }
+        val isARM64Supported = true
+        findViewById<RadioButton>(R.id.arm64Radio).isEnabled = isARM64Supported
     }
 
     private fun startInstallation() {
-        val distro = distroSpinner.selectedItem.toString()
+        val distro = distroSpinner.selectedItem.toString().split(" ").first()
         val arch = when (archRadioGroup.checkedRadioButtonId) {
             R.id.arm64Radio -> "arm64"
             else -> "x86_64"
         }
-        val desktop = desktopSpinner.selectedItem.toString()
-        val browser = browserSpinner.selectedItem.toString()
-        val windowManager = when (windowManagerRadioGroup.checkedRadioButtonId) {
-            R.id.turmuxRadio -> "turmux"
-            R.id.turmuxX11Radio -> "turmux-x11"
-            else -> ""
+        val desktopFull = desktopSpinner.selectedItem.toString()
+        val desktop = desktopFull.split(" ").first()
+        val browser = browserSpinner.selectedItem.toString().split(" ").first()
+
+        val isEmbedded = findViewById<RadioButton>(R.id.embeddedDisplayRadio)?.isChecked == true
+        val isX11 = findViewById<RadioButton>(R.id.turmuxX11Radio)?.isChecked == true
+
+        val displayMode = when {
+            isEmbedded -> "embedded"
+            isX11 -> "termux_x11"
+            else -> "cli"
         }
 
-        // Show installation started
+        val windowManager = when {
+            isEmbedded -> "embedded-x11"
+            isX11 -> "turmux-x11"
+            else -> "turmux"
+        }
+
+        // Disable button & show progress
         installButton.isEnabled = false
-        statusText.text = "Preparing ${distro} installation..."
+        setupProgressBar?.visibility = View.VISIBLE
+        statusText.text = "Preparing $distro ($desktop) environment..."
 
-        // Start the session activity
-        val sessionManager = SessionManager(this)
-        sessionManager.initialize(
-            distroName = distro,
-            architecture = arch,
-            desktopEnv = desktop.split(" ").first(),
-            browser = browser,
-            windowManager = windowManager,
-            useLibTermux = arch == "arm64",
-            showTUI = windowManager.isEmpty()
-        )
-
-        android.util.Log.d("SetupActivity", "Setup complete: distro=$distro, arch=$arch, desktop=$desktop, windowManager=$windowManager")
-
-        Toast.makeText(this, "Installation prepared! Tap the app icon to start Linux.", Toast.LENGTH_LONG).show()
-
-        // Open session activity after a short delay
-        handler.postDelayed({
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                val intent = android.content.Intent(this, com.linuxandroid.SessionActivity::class.java)
-                startActivity(intent)
-            } catch (e: Exception) {
-                android.util.Log.e("SetupActivity", "Failed to open session activity", e)
-                statusText.text = "Error launching session. Please try again."
-                installButton.isEnabled = true
-            }
-        }, 1500)
-    }
+                // Initialize rootfs directory and boot script
+                val rootfsDir = File(filesDir, "rootfs")
+                if (!rootfsDir.exists()) {
+                    rootfsDir.mkdirs()
+                }
 
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                val dirs = listOf("etc", "tmp", "root", "dev", "proc", "sys", "usr/bin")
+                for (d in dirs) {
+                    File(rootfsDir, d).mkdirs()
+                }
+
+                // Setup DNS
+                File(rootfsDir, "etc/resolv.conf").writeText("nameserver 1.1.1.1\nnameserver 8.8.8.8\n")
+
+                // Write start-linux.sh
+                val scriptContent = LinuxBootloader.generateStartScript(
+                    targetDir = rootfsDir.absolutePath,
+                    distroName = distro,
+                    desktopEnv = desktop,
+                    isX11 = isEmbedded || isX11,
+                    username = "root"
+                )
+                val startScript = File(filesDir, "start-linux.sh")
+                startScript.writeText(scriptContent)
+                startScript.setExecutable(true, false)
+
+                // Save session parameters
+                val sessionManager = SessionManager(this@SetupActivity)
+                sessionManager.initialize(
+                    distroName = distro,
+                    architecture = arch,
+                    desktopEnv = desktop,
+                    browser = browser,
+                    windowManager = windowManager,
+                    useLibTermux = arch == "arm64",
+                    showTUI = !isEmbedded && !isX11,
+                    displayMode = displayMode
+                )
+
+                withContext(Dispatchers.Main) {
+                    setupProgressBar?.visibility = View.GONE
+                    statusText.text = "Configuration complete! Launching Linux..."
+                    Toast.makeText(
+                        this@SetupActivity,
+                        "Starting $distro ($desktop)...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    handler.postDelayed({
+                        if (isEmbedded) {
+                            val intent = Intent(this@SetupActivity, DesktopActivity::class.java).apply {
+                                putExtra("EXTRA_DISTRO", distro)
+                                putExtra("EXTRA_DESKTOP", desktop)
+                            }
+                            startActivity(intent)
+                        } else {
+                            val intent = Intent(this@SetupActivity, SessionActivity::class.java)
+                            startActivity(intent)
+                        }
+                        finish()
+                    }, 500)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    setupProgressBar?.visibility = View.GONE
+                    installButton.isEnabled = true
+                    statusText.text = "Setup error: ${e.message}"
+                }
+            }
+        }
+    }
 }

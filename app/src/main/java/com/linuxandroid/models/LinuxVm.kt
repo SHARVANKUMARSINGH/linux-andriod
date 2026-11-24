@@ -14,7 +14,7 @@ data class LinuxVm(
     var desktopEnv: String,
     var browser: String = "Firefox",
     var displayMode: String = "embedded",
-    val mirrorUrl: String,
+    var mirrorUrl: String,
     val rootfsPath: String,
     val startScriptPath: String,
     var isInstalled: Boolean = false,
